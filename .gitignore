@@ -1,0 +1,7 @@
+# Ignore everything by default
+*
+
+# Keep only the deployed website files
+!index.html
+!workshop.html
+!.gitignore

@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep OS — Personalized Sleep Analysis for Oura Users</title>
+  <meta name="description" content="I analyze 90 days of your Oura data and tell you exactly what's suppressing your deep sleep, disrupting your HRV, and what to change.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens (see DESIGN.md) ──────────────────────────── */
+    :root {
+      --bg:          #F6F1E8;
+      --bg-card:     #EDE8DC;
+      --bg-warm:     #E5DDD0;
+      --ink:         #1A1612;
+      --ink-soft:    #2E2820;
+      --accent:      #C1440E;
+      --accent-dim:  #9E3509;
+      --muted:       #7A6F63;
+      --dim:         #B5AFA7;
+      --border:      rgba(26,22,18,0.10);
+      --border-med:  rgba(26,22,18,0.18);
+
+      --bg-dark:     #1A1612;
+      --ink-dark:    #F0EAE0;
+      --muted-dark:  #9A8F85;
+      --border-dark: rgba(240,234,224,0.12);
+
+      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --font-body:    'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+      --radius:  3px;
+      --max-w:   860px;
+      --max-wide:1040px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 17px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ── Focus styles (keyboard navigation) ─────────────────────── */
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: var(--radius);
+    }
+    .pricing-section :focus-visible {
+      outline-color: var(--ink-dark);
+    }
+
+    /* ── Layout helpers ─────────────────────────────────────────── */
+    .container      { max-width: var(--max-w);    margin: 0 auto; padding: 0 28px; }
+    .container--wide { max-width: var(--max-wide); margin: 0 auto; padding: 0 28px; }
+
+    /* ── Nav ────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(246,241,232,0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 54px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding-bottom: 2px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .nav-link:hover { color: var(--ink); border-color: var(--accent); }
+
+    /* ── Hero ───────────────────────────────────────────────────── */
+    .hero {
+      padding: 88px 0 72px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(44px, 7vw, 76px);
+      font-weight: 900;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      max-width: 640px;
+      margin-bottom: 28px;
+    }
+    h1 em { font-style: italic; font-weight: 400; }
+    .hero-sub {
+      font-size: 19px;
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 520px;
+      margin-bottom: 40px;
+    }
+    .hero-sub strong { color: var(--ink); font-weight: 600; }
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 16px;
+      padding: 12px 22px;
+      border-radius: var(--radius);
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--accent-dim); }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 16px;
+      padding: 12px 22px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border-med);
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--ink); }
+    .hero-note {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--dim);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Stats bar ──────────────────────────────────────────────── */
+    .stats-bar { border-bottom: 1px solid var(--border); }
+    .stats-inner {
+      display: flex;
+      align-items: stretch;
+      max-width: var(--max-wide);
+      margin: 0 auto;
+    }
+    .stat-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 20px 28px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-number {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+    .stat-number .a { color: var(--accent); }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Section base ───────────────────────────────────────────── */
+    .section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    h2 {
+      font-family: var(--font-display);
+      font-size: clamp(30px, 4.5vw, 46px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      margin-bottom: 18px;
+    }
+    .section-intro {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 540px;
+      margin-bottom: 44px;
+    }
+
+    /* ── Insight card (rotating — teaching moment) ──────────────── */
+    .insight-section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .insight-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-left: 3px solid var(--accent);
+      padding: 40px 44px;
+      border-radius: var(--radius);
+    }
+    .insight-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 18px;
+    }
+    .insight-quote {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 3vw, 29px);
+      font-weight: 700;
+      line-height: 1.28;
+      color: var(--ink);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+    .insight-body {
+      font-size: 17px;
+      line-height: 1.72;
+      color: var(--ink-soft);
+      max-width: 620px;
+    }
+    .insight-body strong { color: var(--ink); }
+
+    /* ── Pain grid ──────────────────────────────────────────────── */
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .pain-item {
+      padding: 32px;
+      border-right: 1px solid var(--border-med);
+    }
+    .pain-item:last-child { border-right: none; }
+    .pain-n {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .pain-item h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .pain-item p { font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+    /* ── Steps ──────────────────────────────────────────────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 44px;
+    }
+    .step {
+      padding: 36px 32px;
+      border-right: 1px solid var(--border-med);
+    }
+    .step:last-child { border-right: none; }
+    .step-n {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .step h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    .step p { font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+    /* ── What happens next ──────────────────────────────────────── */
+    .next-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      padding: 32px;
+      margin-bottom: 44px;
+    }
+    .next-box-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .next-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .next-row:last-child { margin-bottom: 0; }
+    .next-n {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      padding-top: 2px;
+      min-width: 20px;
+    }
+    .next-text { font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+    .next-text strong { color: var(--ink); }
+
+    /* ── Workshop callout ───────────────────────────────────────── */
+    .callout {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-left: 3px solid var(--ink);
+      border-radius: var(--radius);
+      padding: 32px 36px;
+      display: flex;
+      gap: 40px;
+      align-items: center;
+    }
+    .callout-content { flex: 1; }
+    .callout-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .callout h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .callout p { font-size: 15px; line-height: 1.6; color: var(--muted); }
+
+    /* ── Testimonial ────────────────────────────────────────────── */
+    .testimonial-section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      padding: 40px 44px;
+    }
+    .testimonial-quote {
+      font-family: var(--font-display);
+      font-size: clamp(19px, 2.5vw, 25px);
+      font-style: italic;
+      font-weight: 400;
+      line-height: 1.48;
+      color: var(--ink);
+      margin-bottom: 22px;
+    }
+    .testimonial-quote::before { content: '\201C'; }
+    .testimonial-quote::after  { content: '\201D'; }
+    .testimonial-attr {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .testimonial-attr span { color: var(--accent); }
+
+    /* ── Pricing ────────────────────────────────────────────────── */
+    .pricing-section {
+      background: var(--bg-dark);
+      color: var(--ink-dark);
+      padding: 80px 0;
+    }
+    .pricing-section .section-label { color: var(--muted-dark); }
+    .pricing-section h2 { color: var(--ink-dark); margin-bottom: 14px; }
+    .pricing-sub {
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--muted-dark);
+      margin-bottom: 44px;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .pricing-card {
+      padding: 40px;
+      border-right: 1px solid var(--border-dark);
+    }
+    .pricing-card:last-child { border-right: none; }
+    .pricing-card.featured { background: rgba(240,234,224,0.04); }
+    .pricing-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(193,68,14,0.40);
+      padding: 3px 8px;
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+    .pricing-name {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink-dark);
+      margin-bottom: 6px;
+    }
+    .pricing-tagline { font-size: 15px; color: var(--muted-dark); margin-bottom: 24px; }
+    .pricing-price {
+      font-family: var(--font-mono);
+      font-size: 50px;
+      font-weight: 500;
+      color: var(--ink-dark);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .pricing-price sup { font-size: 22px; vertical-align: super; font-weight: 400; color: var(--muted-dark); }
+    .pricing-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted-dark);
+      letter-spacing: 0.04em;
+      margin-bottom: 28px;
+    }
+    .pricing-note strong { color: var(--accent); }
+    .pricing-divider { height: 1px; background: var(--border-dark); margin-bottom: 24px; }
+    .pricing-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .pricing-features li {
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--muted-dark);
+      padding-left: 18px;
+      position: relative;
+    }
+    .pricing-features li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+    .pricing-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: 8px;
+      padding: 13px 20px;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 16px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .pricing-cta.primary { background: var(--accent); color: #fff; }
+    .pricing-cta.primary:hover { background: var(--accent-dim); }
+    .pricing-cta.secondary {
+      background: transparent;
+      color: var(--ink-dark);
+      border: 1.5px solid var(--border-dark);
+    }
+    .pricing-cta.secondary:hover { border-color: rgba(240,234,224,0.40); }
+    .pricing-privacy {
+      margin-top: 28px;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--muted-dark);
+    }
+    .pricing-privacy a { color: var(--muted-dark); text-decoration: underline; text-underline-offset: 3px; }
+
+    /* ── Deliverables grid ──────────────────────────────────────── */
+    .deliverable-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      border: 1px solid var(--border-dark);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 56px;
+    }
+    .deliverable-item {
+      padding: 28px 32px;
+      border-right: 1px solid var(--border-dark);
+      border-bottom: 1px solid var(--border-dark);
+      background: rgba(240,234,224,0.03);
+    }
+    .deliverable-item:nth-child(2n) { border-right: none; }
+    .deliverable-item:nth-last-child(-n+2) { border-bottom: none; }
+    .deliverable-item h4 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink-dark);
+      margin-bottom: 8px;
+    }
+    .deliverable-item p { font-size: 14px; line-height: 1.6; color: var(--muted-dark); }
+
+    /* ── About ──────────────────────────────────────────────────── */
+    .about-section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .about-inner {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 56px;
+      align-items: start;
+    }
+    .about-sidebar { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+    .about-monogram {
+      width: 52px;
+      height: 52px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .about-name {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .about-role {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .about-body p {
+      font-size: 17px;
+      line-height: 1.75;
+      color: var(--ink-soft);
+      margin-bottom: 18px;
+    }
+    .about-body p:last-child { margin-bottom: 0; }
+    .about-body strong { color: var(--ink); }
+
+    /* ── Disclaimer ─────────────────────────────────────────────── */
+    .disclaimer {
+      padding: 28px 0;
+      border-top: 1px solid var(--border);
+    }
+    .disclaimer p {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--dim);
+    }
+    .disclaimer strong { color: var(--muted); }
+
+    /* ── Footer ─────────────────────────────────────────────────── */
+    footer {
+      padding: 28px 0;
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-brand {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .footer-brand span { color: var(--accent); }
+    .footer-links { display: flex; gap: 24px; align-items: center; }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .footer-links a:hover { color: var(--ink); }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 680px) {
+      .pain-grid, .steps { grid-template-columns: 1fr; }
+      .pain-item, .step { border-right: none; border-bottom: 1px solid var(--border-med); }
+      .pain-item:last-child, .step:last-child { border-bottom: none; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .pricing-card { border-right: none; border-bottom: 1px solid var(--border-dark); }
+      .pricing-card:last-child { border-bottom: none; }
+      .deliverable-grid { grid-template-columns: 1fr; }
+      .deliverable-item { border-right: none; }
+      .deliverable-item:nth-last-child(-n+2) { border-bottom: 1px solid var(--border-dark); }
+      .deliverable-item:last-child { border-bottom: none; }
+      .about-inner { grid-template-columns: 1fr; gap: 24px; }
+      .callout { flex-direction: column; gap: 20px; }
+      h1 { font-size: 40px; }
+      .stats-inner { flex-wrap: wrap; }
+      .stat-item { flex-basis: 50%; border-bottom: 1px solid var(--border); }
+      .insight-card { padding: 28px 24px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="Sleep OS home">Sleep<span>OS</span></a>
+      <a href="workshop.html" class="nav-link" aria-label="Free workshop signup">Free Workshop →</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero" role="banner">
+    <div class="container">
+      <div class="hero-eyebrow">For Oura Ring owners</div>
+      <h1>You know your sleep score.<br><em>You don't know why.</em></h1>
+      <p class="hero-sub">
+        Your Oura ring generates thousands of data points every night. Your scores still plateau.
+        I analyze 90 days of your actual data and tell you exactly what's suppressing your deep sleep,
+        disrupting your HRV, and what to change — <strong>in plain language.</strong>
+      </p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn-primary" aria-label="Get the Sleep Data Report for $49">Get the Report — $49 →</a>
+        <a href="#pricing" class="btn-secondary" aria-label="Book Report plus Consultation for $99">Report + Live Session — $99</a>
+      </div>
+      <p class="hero-note">Beta pricing · Limited spots · Price increases as reviews come in</p>
+    </div>
+  </header>
+
+  <!-- Stats bar -->
+  <section class="stats-bar" aria-label="Key stats">
+    <div class="container--wide">
+      <div class="stats-inner">
+        <div class="stat-item">
+          <span class="stat-number">90<span class="a"> days</span></span>
+          <span class="stat-label">of data analyzed</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">72<span class="a">h</span></span>
+          <span class="stat-label">Report turnaround</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">Oura</span>
+          <span class="stat-label">Ring required</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number"><span class="a">0</span></span>
+          <span class="stat-label">Generic advice</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Insight card: rotating teaching moment -->
+  <section class="insight-section" aria-labelledby="insight-heading">
+    <div class="container">
+      <div class="insight-card" id="insight-card" role="region" aria-live="polite">
+        <!-- Populated by JS below -->
+      </div>
+    </div>
+  </section>
+
+  <!-- The problem -->
+  <section class="section" aria-labelledby="problem-heading">
+    <div class="container">
+      <div class="section-label">The problem</div>
+      <h2 id="problem-heading">Oura shows you the score.<br>Not the cause.</h2>
+      <p class="section-intro">You bought the ring. You track the data. When your readiness drops, the app says "recovery: poor" and offers the same three tips it gave you last week. The data to explain it is already there — it just needs someone who knows how to read it.</p>
+      <div class="pain-grid" role="list">
+        <div class="pain-item" role="listitem">
+          <div class="pain-n">01 /</div>
+          <h3>Scores plateau</h3>
+          <p>You've tried sleep hygiene, cut screens, changed your bedtime. The score moves 2 points and drifts back.</p>
+        </div>
+        <div class="pain-item" role="listitem">
+          <div class="pain-n">02 /</div>
+          <h3>No explanation</h3>
+          <p>The app gives you a number. It doesn't tell you whether it's your meal timing, alcohol from Tuesday, or chronic under-recovery.</p>
+        </div>
+        <div class="pain-item" role="listitem">
+          <div class="pain-n">03 /</div>
+          <h3>Generic fixes</h3>
+          <p>Every article says the same things: dark room, cool temperature, consistent bedtime. You've done all of it. Your data still tells a different story that nobody has read.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section" aria-labelledby="how-heading">
+    <div class="container">
+      <div class="section-label">How it works</div>
+      <h2 id="how-heading">Three steps. No guessing.</h2>
+      <p class="section-intro">Same data your app already collects. Different eyes on it.</p>
+      <div class="steps" role="list">
+        <div class="step" role="listitem">
+          <div class="step-n">Step / 01</div>
+          <h3>Export your Oura data</h3>
+          <p>Oura app → your name → Data Export → 90 days → CSV. Takes 2 minutes. Share it via the intake form — secure Google Drive link, analyzed only for your report.</p>
+        </div>
+        <div class="step" role="listitem">
+          <div class="step-n">Step / 02</div>
+          <h3>I analyze your patterns</h3>
+          <p>Sleep stage trends, HRV variability, timing patterns, day-before correlations. I find what's actually moving your scores — and what isn't.</p>
+        </div>
+        <div class="step" role="listitem">
+          <div class="step-n">Step / 03</div>
+          <h3>You get a personalized report</h3>
+          <p>2–3 pages. Your top 3 sleep issues identified with root causes from the data, behavior changes ranked by impact, gadget recommendations only where your data supports them.</p>
+        </div>
+      </div>
+
+      <!-- What happens next -->
+      <div class="next-box" aria-label="Post-purchase flow">
+        <div class="next-box-label">After you purchase</div>
+        <div class="next-row">
+          <div class="next-n">1 /</div>
+          <div class="next-text">You receive a <strong>secure intake form + upload link</strong> by email within 4 business hours.</div>
+        </div>
+        <div class="next-row">
+          <div class="next-n">2 /</div>
+          <div class="next-text">You upload your 90-day Oura CSV. <strong>Takes 2 minutes.</strong> Your data is analyzed only for your report and deleted within 90 days.</div>
+        </div>
+        <div class="next-row">
+          <div class="next-n">3 /</div>
+          <div class="next-text">Your report arrives <strong>within 72 hours / 3 business days</strong> of data receipt. For the live session tier, a Calendly scheduling link follows immediately after payment.</div>
+        </div>
+      </div>
+
+      <!-- Workshop callout -->
+      <div class="callout" role="complementary" aria-label="Free workshop">
+        <div class="callout-content">
+          <div class="callout-label">Before you buy — start here</div>
+          <h3>Free Sleep Starter Kit Workshop</h3>
+          <p>90 minutes on the sleep science that actually changes behavior. Caffeine timing, alcohol's effect on deep sleep, jet lag recovery, and the gadgets that make a measurable difference. Free. Live. Limited spots.</p>
+        </div>
+        <div>
+          <a href="workshop.html" class="btn-primary">Reserve my spot →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonial -->
+  <section class="testimonial-section" aria-labelledby="testimonial-heading">
+    <div class="container">
+      <div class="section-label" id="testimonial-heading">Early access</div>
+      <div class="testimonial-card">
+        <div class="testimonial-quote">
+          I'd been at a 75 readiness score for three months and assumed it was just stress. Shawn looked at my data and found that my HRV had a consistent 12-point drop every Tuesday night — the day I was training at altitude. I'd never made that connection. I shifted one workout and my weekly HRV went up 8 points.
+        </div>
+        <div class="testimonial-attr">— Phase 0 participant, <span>Oura user since 2022</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section" id="pricing" aria-labelledby="pricing-heading">
+    <div class="container">
+      <div class="section-label">Pricing</div>
+      <h2 id="pricing-heading">Pick your depth.</h2>
+      <p class="pricing-sub">Same analysis. Different delivery. Both require an Oura ring with at least 30 days of data.<br>Early access pricing — raises after the first sessions fill.</p>
+
+      <div class="pricing-grid">
+
+        <!-- Tier 1 -->
+        <article class="pricing-card" aria-label="Sleep Data Report">
+          <div class="pricing-name">Sleep Data Report</div>
+          <div class="pricing-tagline">For data-first self-optimizers</div>
+          <div class="pricing-price"><sup>$</sup>49</div>
+          <div class="pricing-note">Early access price. <strong>Raises to $75</strong> after first 10 reports.</div>
+          <div class="pricing-divider" aria-hidden="true"></div>
+          <ul class="pricing-features" aria-label="Report features">
+            <li>Export your Oura CSV, I handle the rest</li>
+            <li>2–3 page personalized written analysis</li>
+            <li>Top 3 sleep issues identified with root cause</li>
+            <li>Behavior changes ranked by impact</li>
+            <li>Gadget recommendations only where your data supports them</li>
+            <li>Delivered within 72 hours of receiving your data</li>
+          </ul>
+          <!-- TODO: Replace href with Stripe Payment Link for Tier 1 ($49) -->
+          <a href="#stripe-tier1" class="pricing-cta secondary" role="button" aria-label="Get the Sleep Data Report for $49">Get the Report →</a>
+        </article>
+
+        <!-- Tier 2 -->
+        <article class="pricing-card featured" aria-label="Report plus Consultation">
+          <div class="pricing-badge">Most thorough</div>
+          <div class="pricing-name">Report + Live Consultation</div>
+          <div class="pricing-tagline">For people who want context, not just conclusions</div>
+          <div class="pricing-price"><sup>$</sup>99</div>
+          <div class="pricing-note">Early access price. <strong>Raises to $150</strong> after first 5 sessions.</div>
+          <div class="pricing-divider" aria-hidden="true"></div>
+          <ul class="pricing-features" aria-label="Full consultation features">
+            <li>Everything in the Report</li>
+            <li>60-minute live Zoom walkthrough of your data</li>
+            <li>I explain why each finding matters for your specific patterns</li>
+            <li>Real-time Q&amp;A on your sleep history and goals</li>
+            <li>Session recording delivered to your inbox</li>
+            <li>Written report delivered same day as the call</li>
+          </ul>
+          <!-- TODO: Replace href with Stripe Payment Link for Tier 2 ($99) -->
+          <a href="#stripe-tier2" class="pricing-cta primary" role="button" aria-label="Book Report plus Consultation for $99">Book My Session →</a>
+        </article>
+
+      </div>
+
+      <p class="pricing-privacy">
+        Your CSV is analyzed only for your report and deleted within 90 days. Never shared.
+        &nbsp;·&nbsp;
+        <a href="#privacy">Privacy notice</a>
+        &nbsp;·&nbsp;
+        100% refund if not delivered within 72 hrs.
+      </p>
+
+      <!-- What I look at -->
+      <div>
+        <div class="section-label" style="margin-top: 56px;">What I look at in your data</div>
+        <div class="deliverable-grid" role="list">
+          <div class="deliverable-item" role="listitem">
+            <h4>Sleep stage distribution</h4>
+            <p>Deep sleep, REM, and light sleep ratios across 90 days — and what's compressing each stage.</p>
+          </div>
+          <div class="deliverable-item" role="listitem">
+            <h4>HRV patterns</h4>
+            <p>Heart rate variability trends, night-to-night variability, and what's driving the drops.</p>
+          </div>
+          <div class="deliverable-item" role="listitem">
+            <h4>Sleep timing</h4>
+            <p>Social jet lag — the gap between your weekday and weekend sleep schedule — and its cumulative cost.</p>
+          </div>
+          <div class="deliverable-item" role="listitem">
+            <h4>Day-before correlations</h4>
+            <p>Which behaviors (alcohol, late meals, exercise timing) show up in your data the following night.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about-section" aria-labelledby="about-heading">
+    <div class="container">
+      <div class="about-inner">
+        <div class="about-sidebar">
+          <div class="about-monogram" role="img" aria-label="Shawn Hsu initials">S</div>
+          <div class="about-name">Shawn Hsu</div>
+          <div class="about-role">Sleep researcher &amp; data analyst</div>
+        </div>
+        <div class="about-body">
+          <div class="section-label" id="about-heading">About</div>
+          <p>
+            I'm not a sleep clinic. I'm a researcher who has spent years reading the actual sleep science,
+            wearing the trackers, and helping people in my community sleep better. I've presented to groups,
+            written about sleep optimization, and done consultations where people walked away with something
+            they could actually use that night.
+          </p>
+          <p>
+            The insight that drives this: most sleep advice is generic. But <strong>your Oura data is specific to you.</strong>
+            When I look at your data, I'm looking for patterns that generic articles can't find — because
+            they don't have your data. I can tell the difference between poor sleep caused by irregular
+            timing, alcohol from the day before, late caffeine, or under-recovery from exercise.
+            Each of those has a different fix.
+          </p>
+          <p>
+            This is lifestyle optimization, not medicine. I work with healthy adults who want to understand
+            their sleep data and make specific changes. I don't treat disorders — if you suspect a clinical
+            issue, you need a sleep specialist. But if your scores are stuck and you want to know why,
+            that's what I'm here for.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer" id="privacy">
+    <div class="container">
+      <p>
+        <strong>Scope:</strong> Sleep OS is a lifestyle optimization service. I am not a licensed sleep physician,
+        psychologist, or clinical sleep specialist. I work with healthy adults who want to improve sleep quality
+        through behavior change and environmental adjustments. If you have been diagnosed with or suspect a clinical
+        sleep disorder (insomnia disorder, sleep apnea, narcolepsy, RLS, or other conditions), please consult a
+        licensed medical professional. Analysis and recommendations are educational and informational in nature,
+        not medical advice.
+        &nbsp;&nbsp;
+        <strong>Privacy:</strong> Your Oura CSV is uploaded to a Google Drive folder accessible only to me.
+        It is used solely to generate your personal report. Your data is deleted within 90 days of your session
+        unless you request otherwise. Your data is never sold or shared.
+        To request early deletion: <a href="mailto:shawn@sleepOS.com" style="text-decoration: underline; text-underline-offset: 3px;">shawn@sleepOS.com</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">Sleep<span>OS</span></div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="workshop.html">Free Workshop</a>
+          <a href="#pricing">Get Started</a>
+          <a href="#privacy">Privacy</a>
+          <a href="mailto:shawn@sleepOS.com">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Rotating insight cards -->
+  <script>
+    const insights = [
+      {
+        tag: 'Insight / 01',
+        quote: 'Most Oura users have never seen their sleep efficiency and sleep architecture plotted together. They measure completely different things.',
+        body: `Sleep efficiency (time asleep ÷ time in bed) tells you about sleep pressure and environment. Sleep architecture — the distribution of deep, REM, and light sleep — tells you about neurological recovery quality. Your app shows you one composite score. A good analysis looks at both trends across 90 days and finds the nights where one is high and the other is low. <strong>That divergence is usually where the answer lives.</strong>`
+      },
+      {
+        tag: 'Insight / 02',
+        quote: 'Your HRV on Tuesday morning is a 48-hour echo of Sunday\'s behavior — not Monday\'s.',
+        body: `Heart rate variability doesn't respond to last night. It responds to the cumulative physiological load of the past 24–48 hours. Most people try to correlate poor HRV with what they did the night before. When the pattern doesn't match, they conclude "I don't know what affects my HRV." The real signal is <strong>two days earlier</strong>. Identifying this lag in your specific data is one of the highest-value outputs of a 90-day analysis.`
+      },
+      {
+        tag: 'Insight / 03',
+        quote: '7.5 hours almost always outperforms 8 hours. Most people who "sleep 8 hours" are waking mid-cycle.',
+        body: `Human sleep runs in 90-minute cycles. Waking mid-cycle — even from light sleep — resets adenosine clearance in a way that waking at cycle completion does not. Eight hours lands mid-cycle for most people; 7.5 hours lands at cycle end. Your Oura data shows which nights you woke at cycle boundaries and which you didn't. <strong>That pattern, not the total hours, often explains the variance in your morning readiness scores.</strong>`
+      }
+    ];
+
+    function renderInsight(card, insight) {
+      card.innerHTML = `
+        <div class="insight-tag">${insight.tag}</div>
+        <div class="insight-quote">${insight.quote}</div>
+        <p class="insight-body">${insight.body}</p>
+      `;
+    }
+
+    const card = document.getElementById('insight-card');
+    if (card) {
+      const pick = insights[Math.floor(Math.random() * insights.length)];
+      renderInsight(card, pick);
+    }
+
+    // Smooth anchor scrolling
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (href === '#stripe-tier1' || href === '#stripe-tier2') return; // Skip Stripe links
+      a.addEventListener('click', e => {
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

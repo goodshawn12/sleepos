@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep Starter Kit — Free Workshop · Sleep OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────── */
+    :root {
+      --bg:          #F6F1E8;
+      --bg-card:     #EDE8DC;
+      --bg-warm:     #E5DDD0;
+      --ink:         #1A1612;
+      --ink-soft:    #2E2820;
+      --accent:      #C1440E;
+      --accent-dim:  #9E3509;
+      --muted:       #7A6F63;
+      --dim:         #B5AFA7;
+      --border:      rgba(26,22,18,0.10);
+      --border-med:  rgba(26,22,18,0.18);
+      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+      --font-body:    'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+      --radius: 3px;
+      --max-w: 860px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink-soft);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.70;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Focus styles (keyboard navigation) ─────────────────────── */
+    :focus { outline: none; }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: var(--radius);
+    }
+
+    /* ── Nav ─────────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(246,241,232,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-back {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      transition: color 0.15s ease-out;
+    }
+    .nav-back:hover { color: var(--ink); }
+
+    /* ── Container ───────────────────────────────────────────────── */
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Workshop hero ───────────────────────────────────────────── */
+    .workshop-hero {
+      padding: 72px 0 64px;
+      border-bottom: 1px solid var(--border);
+    }
+    .workshop-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 56px;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .workshop-layout { grid-template-columns: 1fr; gap: 40px; }
+    }
+
+    .workshop-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .free-badge {
+      background: var(--accent);
+      color: #F6F1E8;
+      font-size: 10px;
+      font-weight: 500;
+      font-family: var(--font-mono);
+      letter-spacing: 0.10em;
+      padding: 2px 7px;
+      border-radius: var(--radius);
+    }
+    .workshop-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 5vw, 52px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+    .workshop-hero h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--ink-soft);
+    }
+    .workshop-hero .hero-sub {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.70;
+      margin-bottom: 36px;
+      max-width: 480px;
+    }
+
+    .workshop-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+      width: 72px;
+      flex-shrink: 0;
+    }
+    .meta-value {
+      font-size: 15px;
+      color: var(--ink-soft);
+    }
+    .meta-value strong { font-weight: 600; color: var(--ink); }
+    .meta-value span {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Signup card ─────────────────────────────────────────────── */
+    .signup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      padding: 32px;
+      position: sticky;
+      top: 64px;
+    }
+    .signup-card-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .signup-card h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .signup-card .seats-note {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .seats-note strong { color: var(--ink-soft); }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .form-group input {
+      background: var(--bg);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 15px;
+      font-family: var(--font-body);
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s ease-out;
+      width: 100%;
+    }
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+    .form-group input::placeholder {
+      color: var(--dim);
+    }
+    .form-submit {
+      display: block;
+      width: 100%;
+      background: var(--accent);
+      color: #F6F1E8;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 13px 20px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease-out;
+      margin-top: 16px;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+    .form-submit:hover { background: var(--accent-dim); }
+    .form-submit:disabled { background: var(--muted); cursor: default; }
+    .form-privacy {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 10px;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .oura-bonus {
+      margin-top: 20px;
+      padding: 16px 18px;
+      background: var(--bg);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--accent);
+    }
+    .oura-bonus-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .oura-bonus p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .oura-bonus strong { color: var(--ink-soft); }
+
+    /* ── Section base ────────────────────────────────────────────── */
+    .section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.15;
+      color: var(--ink);
+      margin-bottom: 20px;
+      max-width: 600px;
+    }
+    .section > .container > p,
+    .section-body {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.70;
+      max-width: 560px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Topics grid ─────────────────────────────────────────────── */
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 40px;
+    }
+    @media (max-width: 640px) {
+      .topics-grid { grid-template-columns: 1fr; }
+    }
+    @media (min-width: 641px) and (max-width: 860px) {
+      .topics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .topic-item {
+      background: var(--bg-card);
+      padding: 28px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .topic-item:nth-child(3n) { border-right: none; }
+    .topic-item:nth-last-child(-n+3) { border-bottom: none; }
+    @media (max-width: 860px) {
+      .topic-item:nth-child(3n) { border-right: 1px solid var(--border); }
+      .topic-item:nth-child(2n) { border-right: none; }
+      .topic-item:nth-last-child(-n+3) { border-bottom: 1px solid var(--border); }
+      .topic-item:nth-last-child(-n+2) { border-bottom: none; }
+    }
+    @media (max-width: 640px) {
+      .topic-item { border-right: none; }
+      .topic-item:last-child { border-bottom: none; }
+    }
+    .topic-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .topic-item h3 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+    }
+    .topic-item p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.60;
+    }
+
+    /* ── Agenda ──────────────────────────────────────────────────── */
+    .agenda {
+      margin-top: 40px;
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .agenda-item {
+      display: flex;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .agenda-item:last-child { border-bottom: none; }
+    .agenda-time {
+      width: 80px;
+      flex-shrink: 0;
+      padding: 18px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      padding-top: 20px;
+    }
+    .agenda-content {
+      padding: 18px 24px;
+    }
+    .agenda-content h4 {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+      letter-spacing: -0.01em;
+    }
+    .agenda-content p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ── Who is this for ─────────────────────────────────────────── */
+    .fit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 36px;
+    }
+    @media (max-width: 540px) { .fit-grid { grid-template-columns: 1fr; } }
+    .fit-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .fit-card.good { border-top: 3px solid #5A7A5A; }
+    .fit-card.bad  { border-top: 3px solid #8B3A3A; }
+    .fit-header {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .fit-header.good { color: #4A6B4A; }
+    .fit-header.bad  { color: #7A3030; }
+    .fit-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .fit-list li {
+      font-size: 14px;
+      color: var(--muted);
+      display: flex;
+      gap: 10px;
+      line-height: 1.50;
+    }
+    .fit-list li::before { flex-shrink: 0; margin-top: 1px; font-family: var(--font-mono); }
+    .fit-card.good .fit-list li::before { content: '✓'; color: #4A6B4A; font-weight: 500; }
+    .fit-card.bad  .fit-list li::before { content: '✗'; color: #7A3030; font-weight: 500; }
+
+    /* ── FAQ ─────────────────────────────────────────────────────── */
+    .faq {
+      margin-top: 36px;
+      border: 1px solid var(--border-med);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    details {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    details:last-child { border-bottom: none; }
+    summary.faq-q {
+      padding: 18px 24px;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      list-style: none;
+      user-select: none;
+      letter-spacing: -0.01em;
+    }
+    summary.faq-q::-webkit-details-marker { display: none; }
+    summary.faq-q::after {
+      content: '+';
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    details[open] summary.faq-q::after { content: '−'; }
+    .faq-a {
+      padding: 0 24px 18px;
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ── Bottom CTA ──────────────────────────────────────────────── */
+    .bottom-cta {
+      padding: 72px 0;
+      text-align: center;
+    }
+    .bottom-cta h2 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 12px;
+      line-height: 1.10;
+    }
+    .bottom-cta p {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 32px;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #F6F1E8;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 13px 28px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease-out;
+      text-decoration: none;
+      letter-spacing: 0.01em;
+    }
+    .btn-primary:hover { background: var(--accent-dim); }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    footer {
+      padding: 28px 0;
+      border-top: 1px solid var(--border);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .footer-brand {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .footer-brand span { color: var(--accent); }
+    .footer-links { display: flex; gap: 24px; align-items: center; }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+      transition: color 0.15s ease-out;
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .footer-links a:hover { color: var(--muted); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="Sleep OS home">Sleep<span>OS</span></a>
+      <a href="index.html" class="nav-back" aria-label="Back to main site">← Back to Sleep OS</a>
+    </div>
+  </nav>
+
+  <!-- Workshop hero -->
+  <header class="workshop-hero" role="banner">
+    <div class="container">
+      <div class="workshop-layout">
+
+        <!-- Left: content -->
+        <div>
+          <div class="workshop-eyebrow">
+            <span class="free-badge">FREE</span>
+            Live Workshop
+          </div>
+          <h1>Sleep Starter Kit:<br><em>The science that actually works.</em></h1>
+          <p class="hero-sub">
+            90 minutes on the sleep research that changes behavior. Not the usual tips —
+            the specific mechanisms behind caffeine timing, alcohol's effect on deep sleep,
+            jet lag recovery, and the gadgets that show up in actual data.
+          </p>
+
+          <div class="workshop-meta" role="list" aria-label="Workshop details">
+            <div class="meta-row" role="listitem">
+              <div class="meta-label">When</div>
+              <div class="meta-value">
+                <strong>Date TBD</strong>
+                <span>Sign up to be notified when the date is set</span>
+              </div>
+            </div>
+            <div class="meta-row" role="listitem">
+              <div class="meta-label">Length</div>
+              <div class="meta-value">
+                <strong>90 minutes</strong>
+                <span>Presentation + live Q&amp;A</span>
+              </div>
+            </div>
+            <div class="meta-row" role="listitem">
+              <div class="meta-label">Format</div>
+              <div class="meta-value">
+                <strong>Zoom</strong>
+                <span>Link sent on registration. No recording.</span>
+              </div>
+            </div>
+            <div class="meta-row" role="listitem">
+              <div class="meta-label">Cost</div>
+              <div class="meta-value">
+                <strong>Free</strong>
+                <span>No credit card. No upsell during the session.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: signup card -->
+        <aside class="signup-card" aria-label="Workshop registration">
+          <div class="signup-card-eyebrow">Reserve your spot</div>
+          <h3>Sleep Starter Kit</h3>
+          <p class="seats-note"><strong>Limited to 25 seats.</strong> Registered attendees get first access to free sleep analysis sessions.</p>
+
+          <form id="signup-form" novalidate>
+            <div class="form-group">
+              <label for="name">Your name</label>
+              <input type="text" id="name" name="name" placeholder="First name" required autocomplete="given-name">
+            </div>
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div class="form-group">
+              <label for="device">Sleep tracker <span style="font-size:9px; color:var(--dim);">(optional)</span></label>
+              <input type="text" id="device" name="device" placeholder="Oura, Whoop, Apple Watch, none…">
+            </div>
+            <button type="submit" class="form-submit" id="submit-btn">Notify me when it's live →</button>
+            <p class="form-privacy">No spam. One email when the date is confirmed.</p>
+          </form>
+
+          <div class="oura-bonus" role="note" aria-label="Oura bonus note">
+            <div class="oura-bonus-label">Oura ring owners</div>
+            <p>At the end of the workshop, I'll invite <strong>10 Oura users</strong> for a free 60-minute personal sleep analysis session — your data, analyzed and walked through live.</p>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- What you'll learn -->
+  <section class="section" aria-labelledby="topics-heading">
+    <div class="container">
+      <div class="section-eyebrow">What you'll learn</div>
+      <h2 id="topics-heading">The sleep science they don't put in blog posts.</h2>
+      <p class="section-body">
+        Most sleep content covers the same ground. This workshop goes deeper: the actual
+        research mechanisms, why common advice often doesn't work, and what the data
+        says about what does.
+      </p>
+
+      <div class="topics-grid" role="list">
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">01 /</div>
+          <h3>Sleep architecture & why your deep sleep matters</h3>
+          <p>What's actually happening in each sleep stage, why deep sleep is the one most people sabotage without knowing it, and what your Oura score is actually measuring.</p>
+        </div>
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">02 /</div>
+          <h3>Caffeine: the half-life problem</h3>
+          <p>Why your 2pm coffee is still affecting your deep sleep at midnight. The research on caffeine metabolism, timing, and how to calculate your personal cut-off time.</p>
+        </div>
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">03 /</div>
+          <h3>Alcohol & the REM debt you don't know you're taking</h3>
+          <p>A glass of wine at dinner feels like it helps you sleep. The data says otherwise. What alcohol actually does to your sleep stages — and when the effect wears off.</p>
+        </div>
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">04 /</div>
+          <h3>Jet lag: the protocol that actually works</h3>
+          <p>Light exposure timing, melatonin dosing, strategic napping, and the order that matters. How to arrive functional instead of wrecked.</p>
+        </div>
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">05 /</div>
+          <h3>Gadgets worth buying (and the ones that aren't)</h3>
+          <p>The sleep gadgets that show measurable effects in real data — sleep masks, white noise, temperature tools — and which ones are marketing theater.</p>
+        </div>
+        <div class="topic-item" role="listitem">
+          <div class="topic-num">06 /</div>
+          <h3>Reading your own Oura data</h3>
+          <p>What your readiness score, HRV baseline, and sleep stage distribution are actually telling you — and what questions to ask when scores drop unexpectedly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Agenda -->
+  <section class="section" aria-labelledby="agenda-heading">
+    <div class="container">
+      <div class="section-eyebrow">Session agenda</div>
+      <h2 id="agenda-heading">What 90 minutes looks like.</h2>
+
+      <div class="agenda" role="table" aria-label="Workshop agenda">
+        <div class="agenda-item" role="row">
+          <div class="agenda-time" role="cell">0–10m</div>
+          <div class="agenda-content" role="cell">
+            <h4>Context: why standard sleep advice fails</h4>
+            <p>The gap between generic recommendations and what wearable data actually shows. Why personalizing matters.</p>
+          </div>
+        </div>
+        <div class="agenda-item" role="row">
+          <div class="agenda-time" role="cell">10–30m</div>
+          <div class="agenda-content" role="cell">
+            <h4>Sleep architecture deep dive</h4>
+            <p>Deep sleep, REM, and light sleep — what each does, how to read your own stage distribution, and the biggest suppressors of each.</p>
+          </div>
+        </div>
+        <div class="agenda-item" role="row">
+          <div class="agenda-time" role="cell">30–55m</div>
+          <div class="agenda-content" role="cell">
+            <h4>The big three: caffeine, alcohol, jet lag</h4>
+            <p>Mechanisms, timing, and actionable protocols you can apply the same week. Research-grounded, not anecdotal.</p>
+          </div>
+        </div>
+        <div class="agenda-item" role="row">
+          <div class="agenda-time" role="cell">55–75m</div>
+          <div class="agenda-content" role="cell">
+            <h4>Gadgets: what moves the needle</h4>
+            <p>Live walkthrough of the sleep tools that show consistent results in data — with the research behind each one.</p>
+          </div>
+        </div>
+        <div class="agenda-item" role="row">
+          <div class="agenda-time" role="cell">75–90m</div>
+          <div class="agenda-content" role="cell">
+            <h4>Live Q&amp;A + Oura analysis offer</h4>
+            <p>Open Q&amp;A on anything covered. I'll invite 10 Oura users for a free personal sleep analysis session.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who is this for -->
+  <section class="section" aria-labelledby="fit-heading">
+    <div class="container">
+      <div class="section-eyebrow">Is this for you?</div>
+      <h2 id="fit-heading">Good fit. Not-so-good fit.</h2>
+
+      <div class="fit-grid">
+        <div class="fit-card good">
+          <div class="fit-header good">Good fit</div>
+          <ul class="fit-list" aria-label="Workshop is good for">
+            <li>You track sleep data but don't fully understand it</li>
+            <li>You've tried sleep hygiene basics and they haven't moved the needle</li>
+            <li>You want to understand the science, not just the rules</li>
+            <li>You use an Oura ring, Whoop, Apple Watch, or Fitbit</li>
+            <li>You're curious about specific tools and whether they're worth it</li>
+          </ul>
+        </div>
+        <div class="fit-card bad">
+          <div class="fit-header bad">Not the right fit</div>
+          <ul class="fit-list" aria-label="Workshop is not good for">
+            <li>You've been diagnosed with a clinical sleep disorder (apnea, narcolepsy) — see a sleep physician</li>
+            <li>You're looking for a medical consultation or diagnosis</li>
+            <li>You want a quick fix without understanding why</li>
+            <li>You don't currently track any sleep metrics</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" aria-labelledby="faq-heading">
+    <div class="container">
+      <div class="section-eyebrow">Questions</div>
+      <h2 id="faq-heading">Common questions.</h2>
+
+      <div class="faq">
+        <details>
+          <summary class="faq-q">Do I need an Oura ring to attend?</summary>
+          <p class="faq-a">No — the workshop covers sleep science and practical tools for anyone. An Oura ring is only required for the free personal analysis offer at the end (those spots are for Oura users only, because that's the data format I work with for Phase 1).</p>
+        </details>
+        <details>
+          <summary class="faq-q">What's the free analysis session at the end?</summary>
+          <p class="faq-a">After the workshop, I'll invite 10 attendees who own an Oura ring to a free 60-minute sleep analysis session. You export your Oura data (CSV), I analyze it before our call, and we walk through what I found together. In exchange, I ask for honest feedback afterward. Limited to 10 people — first come, first served.</p>
+        </details>
+        <details>
+          <summary class="faq-q">Is this a sales pitch for a paid service?</summary>
+          <p class="faq-a">The workshop itself is 100% content — I don't pitch anything during the 90 minutes. At the end, I'll mention the paid Sleep OS analysis service for people who want to continue, but that's a 60-second mention, not a sales presentation.</p>
+        </details>
+        <details>
+          <summary class="faq-q">Will the recording be available?</summary>
+          <p class="faq-a">No. The live Q&amp;A is part of the value, and I want attendees to be present. Sign up and attend live. I'll run the workshop again if there's demand.</p>
+        </details>
+        <details>
+          <summary class="faq-q">Who's running this?</summary>
+          <p class="faq-a">Shawn Hsu — sleep researcher, data analyst, and Oura user. I'm not a licensed sleep physician; this is research and data-driven lifestyle optimization, not clinical advice.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="bottom-cta" aria-label="Sign up call to action">
+    <div class="container">
+      <h2>Limited to 25 seats.</h2>
+      <p>Sign up now to be notified the moment the date is confirmed.</p>
+      <a href="#signup-form" class="btn-primary" onclick="document.getElementById('email').focus(); return false;" role="button">Reserve my spot →</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">Sleep<span>OS</span></div>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="index.html">Sleep OS</a>
+          <a href="index.html#pricing">Get Analysis</a>
+          <a href="mailto:shawn@sleepOS.com">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Form: show confirmation state
+    // In production: wire to Mailchimp / Beehiiv / Formspree
+    const form = document.getElementById('signup-form');
+    const btn  = document.getElementById('submit-btn');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        if (!email || !email.includes('@')) {
+          document.getElementById('email').focus();
+          return;
+        }
+        btn.textContent = "✓ You're on the list";
+        btn.disabled = true;
+        // TODO: POST to form handler
+        // fetch('/api/signup', { method: 'POST', body: JSON.stringify({ email }) })
+      });
+    }
+  </script>
+</body>
+</html>
